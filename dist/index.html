@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signal Feedback Web Component — Verification Host</title>
+    <style>:root{--canvas-bg:#090d16;--canvas-text:#94a3b8;--panel-bg:#0f172ad9;--panel-border:#ffffff1f;--control-bg:#1e293bb3;--control-text:#f8fafc;--accent:#3b82f6}*{box-sizing:border-box;margin:0;padding:0}body{background-color:var(--canvas-bg);color:var(--canvas-text);background-image:radial-gradient(#ffffff0d 1px,#0000 1px);background-size:24px 24px;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;display:flex;overflow-x:hidden}.dev-toolbar{z-index:10000;background:var(--panel-bg);border:1px solid var(--panel-border);-webkit-backdrop-filter:blur(16px);border-radius:9999px;flex-wrap:wrap;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:8px 16px;display:flex;position:fixed;top:16px;left:50%;transform:translate(-50%);box-shadow:0 10px 25px -5px #00000080}.dev-label{letter-spacing:.06em;text-transform:uppercase;color:#e2e8f0;align-items:center;gap:6px;font-size:11px;font-weight:700;display:flex}.status-dot{background-color:#eab308;border-radius:50%;width:8px;height:8px}.status-dot.online{background-color:#22c55e;box-shadow:0 0 8px #22c55e}.status-dot.offline{background-color:#ef4444}.dev-control-group{align-items:center;gap:6px;display:flex}.dev-control-group span{color:#94a3b8;font-size:11px}select,button,input[type=range]{background:var(--control-bg);color:var(--control-text);border:1px solid var(--panel-border);cursor:pointer;border-radius:6px;outline:none;padding:4px 8px;font-family:inherit;font-size:12px;transition:border-color .15s}select:focus,button:focus{border-color:var(--accent)}button:hover{background:#ffffff1f}.embedded-container{width:100%;max-width:440px;margin:60px auto 20px;display:none}.embedded-container.active{display:block}.event-monitor{z-index:10000;border:1px solid var(--panel-border);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#cbd5e1;pointer-events:none;background:#0f172ad9;border-radius:10px;max-width:320px;padding:10px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;position:fixed;bottom:20px;left:20px}.event-title{color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-size:9px;font-weight:600}.event-last{color:#38bdf8}@media (width<=768px){.dev-toolbar{border-radius:12px;justify-content:center;padding:10px;top:10px}}</style>
+    <script type="module" crossorigin src="/assets/index-DU8I4sOh.js"></script>
+  </head>
+  <body>
+    <!-- Secondary testing control bar -->
+    <header class="dev-toolbar" aria-label="Component testing controls">
+      <div class="dev-label">
+        <span class="status-dot" id="backend-status" title="Checking backend health..."></span>
+        <span>SIGNAL</span>
+      </div>
+
+      <!-- Photographic Preset Selector -->
+      <div class="dev-control-group">
+        <span>Photo Preset:</span>
+        <select id="preset-select" aria-label="Select photographic background preset">
+          <option value="lavender-clouds" selected>1. Lavender Clouds</option>
+          <option value="cinematic-ocean">2. Cinematic Ocean</option>
+          <option value="desert-dunes">3. Desert Dunes</option>
+          <option value="emerald-forest">4. Emerald Forest</option>
+          <option value="mountain-landscape">5. Mountain Landscape</option>
+          <option value="sunset-sky">6. Sunset Sky</option>
+          <option value="architectural-shadows">7. Architectural Shadows</option>
+          <option value="natural-texture">8. Natural Texture</option>
+        </select>
+      </div>
+
+      <!-- Theme Switcher -->
+      <div class="dev-control-group">
+        <span>Theme:</span>
+        <select id="theme-select" aria-label="Select theme mode">
+          <option value="auto">Auto</option>
+          <option value="dark" selected>Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+
+      <!-- Contrast Mode -->
+      <div class="dev-control-group">
+        <span>Contrast:</span>
+        <select id="contrast-select" aria-label="Select contrast mode">
+          <option value="normal" selected>Normal</option>
+          <option value="high">High Contrast (WCAG)</option>
+        </select>
+      </div>
+
+      <!-- Overlay Intensity -->
+      <div class="dev-control-group">
+        <span>Overlay:</span>
+        <input
+          type="range"
+          id="overlay-slider"
+          min="10"
+          max="80"
+          value="45"
+          step="5"
+          aria-label="Overlay intensity"
+          title="Adjust dark/light overlay intensity"
+        />
+        <span id="overlay-val">45%</span>
+      </div>
+
+      <!-- Position & Mode -->
+      <div class="dev-control-group">
+        <span>Mode:</span>
+        <select id="mode-select" aria-label="Select widget display mode">
+          <option value="floating" selected>Floating Launcher</option>
+          <option value="embedded">Embedded Panel</option>
+        </select>
+      </div>
+
+      <div class="dev-control-group" id="position-group">
+        <span>Pos:</span>
+        <select id="pos-select" aria-label="Select widget floating position">
+          <option value="bottom-right" selected>Bottom Right</option>
+          <option value="bottom-left">Bottom Left</option>
+          <option value="top-right">Top Right</option>
+          <option value="top-left">Top Left</option>
+        </select>
+      </div>
+
+      <!-- Trigger Toggle Button -->
+      <button type="button" id="toggle-btn" aria-label="Toggle widget panel">Toggle Panel</button>
+      <button type="button" id="reset-btn" aria-label="Reset widget inputs">Reset</button>
+    </header>
+
+    <!-- Embedded mode placeholder mount -->
+    <div class="embedded-container" id="embedded-wrapper"></div>
+
+    <!-- Event Monitor Toast -->
+    <div class="event-monitor">
+      <div class="event-title">Live Component Event Monitor</div>
+      <div class="event-last" id="event-log">Ready. Widget mounted.</div>
+    </div>
+
+    <!-- The SIGNAL Feedback Web Component -->
+    <!-- CRITICAL REQUIREMENT: Photographic background is inside the widget, NOT on the host page -->
+    <signal-feedback
+      id="feedback-widget"
+      api-base-url="http://localhost:3001"
+      project-key="prj_live_signal_demo_default"
+      background="lavender-clouds"
+      theme="dark"
+      overlay-intensity="45"
+      contrast-mode="normal"
+      position="bottom-right"
+      launcher-label="Feedback"
+      panel-title="Send Feedback"
+      panel-description="We appreciate your thoughts. Tell us how we can improve."
+      enable-rating="true"
+      enable-email="true"
+      enable-context="true"
+      max-length="2000"
+    ></signal-feedback>
+
+    <!-- Import component as ES module -->
+
+  </body>
+</html>

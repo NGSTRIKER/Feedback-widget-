@@ -300,10 +300,16 @@
       const backendStatus = document.getElementById('backend-status');
       const embeddedWrapper = document.getElementById('embedded-wrapper');
 
+      // Dynamically detect API base URL (local dev on port 3001 vs Vercel remote domain)
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const defaultApiUrl = isLocal ? 'http://localhost:3001' : window.location.origin;
+      widget.setAttribute('api-base-url', defaultApiUrl);
+
       // Check backend health
       async function checkHealth() {
+        const healthUrl = isLocal ? 'http://localhost:3001/v1/health' : '/v1/health';
         try {
-          const res = await fetch('http://localhost:3001/v1/health');
+          const res = await fetch(healthUrl);
           if (res.ok) {
             const data = await res.json();
             backendStatus.className = 'status-dot online';
@@ -314,7 +320,7 @@
           }
         } catch {
           backendStatus.className = 'status-dot offline';
-          backendStatus.title = 'Backend offline. Run npm run start:server';
+          backendStatus.title = isLocal ? 'Backend offline. Run npm run start:server' : 'Backend unavailable';
         }
       }
       checkHealth();

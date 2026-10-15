@@ -15,8 +15,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/clean-dist.js",
-    "build": "vite build",
+    "build": "node scripts/build-all.js",
     "start:server": "tsx src/server/index.ts",
     "dev:server": "tsx watch src/server/index.ts",
     "test": "vitest run",
