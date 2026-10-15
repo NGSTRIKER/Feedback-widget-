@@ -217,7 +217,7 @@ export const SIGNAL_STYLES = /* css */ `
   overflow: hidden;
 }
 
-/* Layer 2: Adaptive Scrim Overlay - tuned for photo clarity */
+/* Layer 2: Adaptive Scrim Overlay - opacity driven by slider */
 .signal-panel-overlay-layer {
   position: absolute;
   top: 0;
@@ -227,21 +227,23 @@ export const SIGNAL_STYLES = /* css */ `
   z-index: 2;
   background: linear-gradient(
     180deg,
-    rgba(10, 15, 26, 0.40) 0%,
-    rgba(10, 15, 26, 0.58) 55%,
-    rgba(10, 15, 26, 0.78) 100%
+    rgba(10, 15, 26, 0.35) 0%,
+    rgba(10, 15, 26, 0.70) 50%,
+    rgba(10, 15, 26, 0.95) 100%
   );
+  opacity: var(--signal-overlay-opacity, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   pointer-events: none;
+  transition: opacity 0.1s ease;
 }
 
 :host([theme="light"]) .signal-panel-overlay-layer {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.45) 0%,
-    rgba(255, 255, 255, 0.65) 55%,
-    rgba(255, 255, 255, 0.85) 100%
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.70) 50%,
+    rgba(255, 255, 255, 0.95) 100%
   );
 }
 

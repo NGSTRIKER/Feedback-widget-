@@ -268,6 +268,15 @@ describe('SignalFeedback Custom Element Tests', () => {
       const resetTextarea = element.shadowRoot!.querySelector('textarea')!;
       expect(resetTextarea.value).toBe('');
     });
+
+    it('dynamically adjusts overlay opacity when overlay-intensity attribute changes', () => {
+      element.setAttribute('overlay-intensity', '70');
+      const overlay = element.shadowRoot!.querySelector('.signal-panel-overlay-layer') as HTMLElement;
+      expect(overlay.style.opacity).toBe('0.7');
+
+      element.setAttribute('overlay-intensity', '25');
+      expect(overlay.style.opacity).toBe('0.25');
+    });
   });
 
   describe('Lifecycle and Multi-Instance Isolation', () => {

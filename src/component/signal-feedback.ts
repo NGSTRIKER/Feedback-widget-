@@ -106,13 +106,13 @@ export class SignalFeedback extends HTMLElement {
       return;
     }
 
-    if (name === 'background' || name === 'background-position' || name === 'overlay-intensity') {
-      this._updateBackground();
+    if (name === 'overlay-intensity' || name === 'accent-color' || name === 'theme' || name === 'contrast-mode') {
+      this._applyCustomProperties();
       return;
     }
 
-    if (name === 'accent-color' || name === 'theme' || name === 'contrast-mode') {
-      this._applyCustomProperties();
+    if (name === 'background' || name === 'background-position') {
+      this._updateBackground();
       return;
     }
 
@@ -176,6 +176,23 @@ export class SignalFeedback extends HTMLElement {
 
   set maxLength(val: number) {
     this.setAttribute('max-length', val.toString());
+  }
+
+  get overlayIntensity(): number {
+    const val = parseFloat(this.getAttribute('overlay-intensity') || '45');
+    return isNaN(val) ? 45 : val;
+  }
+
+  set overlayIntensity(val: number) {
+    this.setAttribute('overlay-intensity', val.toString());
+  }
+
+  get contrastMode(): ContrastMode {
+    return (this.getAttribute('contrast-mode') as ContrastMode) || 'normal';
+  }
+
+  set contrastMode(val: ContrastMode) {
+    this.setAttribute('contrast-mode', val);
   }
 
   public show() {
@@ -287,13 +304,14 @@ export class SignalFeedback extends HTMLElement {
     const normalized = !isNaN(num) ? (num > 1 ? num / 100 : num) : 0.45;
     const theme = this.getAttribute('theme');
     const isLight = theme === 'light';
-    const baseRgb = isLight ? '255, 255, 255' : '10, 15, 26';
-    const o1 = Math.max(normalized - 0.15, 0.15).toFixed(2);
-    const o2 = normalized.toFixed(2);
-    const o3 = Math.min(normalized + 0.25, 0.92).toFixed(2);
+
+    this.style.setProperty('--signal-overlay-opacity', normalized.toString());
 
     if (this._overlayLayer) {
-      this._overlayLayer.style.background = `linear-gradient(180deg, rgba(${baseRgb}, ${o1}) 0%, rgba(${baseRgb}, ${o2}) 50%, rgba(${baseRgb}, ${o3}) 100%)`;
+      this._overlayLayer.style.opacity = normalized.toString();
+      this._overlayLayer.style.background = isLight
+        ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.70) 50%, rgba(255, 255, 255, 0.95) 100%)'
+        : 'linear-gradient(180deg, rgba(10, 15, 26, 0.35) 0%, rgba(10, 15, 26, 0.70) 50%, rgba(10, 15, 26, 0.95) 100%)';
     }
   }
 

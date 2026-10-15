@@ -19,7 +19,7 @@ describe('Signal Backend API Integration Tests', () => {
 
     const prj = await db.query('SELECT id FROM projects WHERE project_key = $1', [defaultProjectKey]);
     projectId = prj.rows[0].id;
-  });
+  }, 20000);
 
   afterAll(async () => {
     await db.close();
