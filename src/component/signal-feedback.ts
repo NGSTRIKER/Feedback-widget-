@@ -283,13 +283,17 @@ export class SignalFeedback extends HTMLElement {
     }
 
     const intensity = this.getAttribute('overlay-intensity');
-    if (intensity !== null) {
-      const num = parseFloat(intensity);
-      const normalized = !isNaN(num) ? (num > 1 ? num / 100 : num) : 0.65;
-      const theme = this.getAttribute('theme');
-      const isLight = theme === 'light';
-      const rgb = isLight ? '255, 255, 255' : '15, 23, 42';
-      this.style.setProperty('--signal-overlay-color', `rgba(${rgb}, ${normalized})`);
+    const num = intensity !== null ? parseFloat(intensity) : 45;
+    const normalized = !isNaN(num) ? (num > 1 ? num / 100 : num) : 0.45;
+    const theme = this.getAttribute('theme');
+    const isLight = theme === 'light';
+    const baseRgb = isLight ? '255, 255, 255' : '10, 15, 26';
+    const o1 = Math.max(normalized - 0.15, 0.15).toFixed(2);
+    const o2 = normalized.toFixed(2);
+    const o3 = Math.min(normalized + 0.25, 0.92).toFixed(2);
+
+    if (this._overlayLayer) {
+      this._overlayLayer.style.background = `linear-gradient(180deg, rgba(${baseRgb}, ${o1}) 0%, rgba(${baseRgb}, ${o2}) 50%, rgba(${baseRgb}, ${o3}) 100%)`;
     }
   }
 
@@ -321,18 +325,23 @@ export class SignalFeedback extends HTMLElement {
 
     if (this._bgLayer) {
       this._bgLayer.style.backgroundPosition = bgPos;
-      // Start with fallback gradient immediately
-      this._bgLayer.style.background = fallbackGrad;
-    }
+      this._bgLayer.style.backgroundSize = 'cover';
+      this._bgLayer.style.backgroundRepeat = 'no-repeat';
 
-    if (targetUrl) {
-      const ok = await preloadImage(targetUrl);
-      if (ok && this._bgLayer) {
+      if (targetUrl) {
         this._activeBackgroundUrl = targetUrl;
-        this._bgLayer.style.backgroundImage = `url("${targetUrl}")`;
-      } else if (this._bgLayer) {
-        // Fallback gradient remains active
+        // Mount image with fallback gradient immediately for zero-delay browser rendering
+        this._bgLayer.style.backgroundImage = `url("${targetUrl}"), ${fallbackGrad}`;
+
+        preloadImage(targetUrl).then((ok) => {
+          if (!ok && this._bgLayer) {
+            this._bgLayer.style.backgroundImage = fallbackGrad;
+            this._activeBackgroundUrl = null;
+          }
+        });
+      } else {
         this._activeBackgroundUrl = null;
+        this._bgLayer.style.backgroundImage = fallbackGrad;
       }
     }
 
