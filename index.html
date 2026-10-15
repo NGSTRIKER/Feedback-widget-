@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signal Feedback Web Component — Verification Host</title>
+    <style>
+      /* Neutral host canvas: minimal, unobtrusive, NO marketing or website chrome */
+      :root {
+        --canvas-bg: #090d16;
+        --canvas-text: #94a3b8;
+        --panel-bg: rgba(15, 23, 42, 0.85);
+        --panel-border: rgba(255, 255, 255, 0.12);
+        --control-bg: rgba(30, 41, 59, 0.7);
+        --control-text: #f8fafc;
+        --accent: #3b82f6;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: var(--canvas-bg);
+        background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 24px 24px;
+        color: var(--canvas-text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        overflow-x: hidden;
+      }
+
+      /* Developer testing toolbar - compact, secondary control surface */
+      .dev-toolbar {
+        position: fixed;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 8px 16px;
+        border-radius: 9999px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        max-width: calc(100vw - 32px);
+      }
+
+      .dev-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #eab308;
+      }
+
+      .status-dot.online {
+        background-color: #22c55e;
+        box-shadow: 0 0 8px #22c55e;
+      }
+
+      .status-dot.offline {
+        background-color: #ef4444;
+      }
+
+      .dev-control-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dev-control-group span {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+
+      select, button, input[type="range"] {
+        font-family: inherit;
+        font-size: 12px;
+        background: var(--control-bg);
+        color: var(--control-text);
+        border: 1px solid var(--panel-border);
+        padding: 4px 8px;
+        border-radius: 6px;
+        outline: none;
+        cursor: pointer;
+        transition: border-color 0.15s ease;
+      }
+
+      select:focus, button:focus {
+        border-color: var(--accent);
+      }
+
+      button:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* Embedded container wrapper */
+      .embedded-container {
+        display: none;
+        width: 100%;
+        max-width: 440px;
+        margin: 60px auto 20px auto;
+      }
+
+      .embedded-container.active {
+        display: block;
+      }
+
+      /* Event log toast in corner */
+      .event-monitor {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 10000;
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid var(--panel-border);
+        backdrop-filter: blur(12px);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        color: #cbd5e1;
+        max-width: 320px;
+        pointer-events: none;
+      }
+
+      .event-title {
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        font-size: 9px;
+        letter-spacing: 0.05em;
+      }
+
+      .event-last {
+        color: #38bdf8;
+      }
+
+      @media (max-width: 768px) {
+        .dev-toolbar {
+          top: 10px;
+          border-radius: 12px;
+          padding: 10px;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Secondary testing control bar -->
+    <header class="dev-toolbar" aria-label="Component testing controls">
+      <div class="dev-label">
+        <span class="status-dot" id="backend-status" title="Checking backend health..."></span>
+        <span>SIGNAL</span>
+      </div>
+
+      <!-- Photographic Preset Selector -->
+      <div class="dev-control-group">
+        <span>Photo Preset:</span>
+        <select id="preset-select" aria-label="Select photographic background preset">
+          <option value="lavender-clouds" selected>1. Lavender Clouds</option>
+          <option value="cinematic-ocean">2. Cinematic Ocean</option>
+          <option value="desert-dunes">3. Desert Dunes</option>
+          <option value="emerald-forest">4. Emerald Forest</option>
+          <option value="mountain-landscape">5. Mountain Landscape</option>
+          <option value="sunset-sky">6. Sunset Sky</option>
+          <option value="architectural-shadows">7. Architectural Shadows</option>
+          <option value="natural-texture">8. Natural Texture</option>
+        </select>
+      </div>
+
+      <!-- Theme Switcher -->
+      <div class="dev-control-group">
+        <span>Theme:</span>
+        <select id="theme-select" aria-label="Select theme mode">
+          <option value="auto">Auto</option>
+          <option value="dark" selected>Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+
+      <!-- Contrast Mode -->
+      <div class="dev-control-group">
+        <span>Contrast:</span>
+        <select id="contrast-select" aria-label="Select contrast mode">
+          <option value="normal" selected>Normal</option>
+          <option value="high">High Contrast (WCAG)</option>
+        </select>
+      </div>
+
+      <!-- Overlay Intensity -->
+      <div class="dev-control-group">
+        <span>Overlay:</span>
+        <input
+          type="range"
+          id="overlay-slider"
+          min="20"
+          max="95"
+          value="65"
+          step="5"
+          aria-label="Overlay intensity"
+          title="Adjust dark/light overlay intensity"
+        />
+        <span id="overlay-val">65%</span>
+      </div>
+
+      <!-- Position & Mode -->
+      <div class="dev-control-group">
+        <span>Mode:</span>
+        <select id="mode-select" aria-label="Select widget display mode">
+          <option value="floating" selected>Floating Launcher</option>
+          <option value="embedded">Embedded Panel</option>
+        </select>
+      </div>
+
+      <div class="dev-control-group" id="position-group">
+        <span>Pos:</span>
+        <select id="pos-select" aria-label="Select widget floating position">
+          <option value="bottom-right" selected>Bottom Right</option>
+          <option value="bottom-left">Bottom Left</option>
+          <option value="top-right">Top Right</option>
+          <option value="top-left">Top Left</option>
+        </select>
+      </div>
+
+      <!-- Trigger Toggle Button -->
+      <button type="button" id="toggle-btn" aria-label="Toggle widget panel">Toggle Panel</button>
+      <button type="button" id="reset-btn" aria-label="Reset widget inputs">Reset</button>
+    </header>
+
+    <!-- Embedded mode placeholder mount -->
+    <div class="embedded-container" id="embedded-wrapper"></div>
+
+    <!-- Event Monitor Toast -->
+    <div class="event-monitor">
+      <div class="event-title">Live Component Event Monitor</div>
+      <div class="event-last" id="event-log">Ready. Widget mounted.</div>
+    </div>
+
+    <!-- The SIGNAL Feedback Web Component -->
+    <!-- CRITICAL REQUIREMENT: Photographic background is inside the widget, NOT on the host page -->
+    <signal-feedback
+      id="feedback-widget"
+      api-base-url="http://localhost:3001"
+      project-key="prj_live_signal_demo_default"
+      background="lavender-clouds"
+      theme="dark"
+      contrast-mode="normal"
+      position="bottom-right"
+      launcher-label="Feedback"
+      panel-title="Send Feedback"
+      panel-description="We appreciate your thoughts. Tell us how we can improve."
+      enable-rating="true"
+      enable-email="true"
+      enable-context="true"
+      max-length="2000"
+    ></signal-feedback>
+
+    <!-- Import component as ES module -->
+    <script type="module" src="/src/component/index.ts"></script>
+
+    <script type="module">
+      const widget = document.getElementById('feedback-widget');
+      const presetSelect = document.getElementById('preset-select');
+      const themeSelect = document.getElementById('theme-select');
+      const contrastSelect = document.getElementById('contrast-select');
+      const overlaySlider = document.getElementById('overlay-slider');
+      const overlayVal = document.getElementById('overlay-val');
+      const modeSelect = document.getElementById('mode-select');
+      const posSelect = document.getElementById('pos-select');
+      const posGroup = document.getElementById('position-group');
+      const toggleBtn = document.getElementById('toggle-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const eventLog = document.getElementById('event-log');
+      const backendStatus = document.getElementById('backend-status');
+      const embeddedWrapper = document.getElementById('embedded-wrapper');
+
+      // Check backend health
+      async function checkHealth() {
+        try {
+          const res = await fetch('http://localhost:3001/v1/health');
+          if (res.ok) {
+            const data = await res.json();
+            backendStatus.className = 'status-dot online';
+            backendStatus.title = `Backend Online (${data.database.dialect} / ${data.database.driver})`;
+          } else {
+            backendStatus.className = 'status-dot offline';
+            backendStatus.title = 'Backend returned error';
+          }
+        } catch {
+          backendStatus.className = 'status-dot offline';
+          backendStatus.title = 'Backend offline. Run npm run start:server';
+        }
+      }
+      checkHealth();
+
+      // Controls handlers
+      presetSelect.addEventListener('change', (e) => {
+        widget.setAttribute('background', e.target.value);
+        logEvent(`background preset -> ${e.target.value}`);
+      });
+
+      themeSelect.addEventListener('change', (e) => {
+        widget.setAttribute('theme', e.target.value);
+        logEvent(`theme -> ${e.target.value}`);
+      });
+
+      contrastSelect.addEventListener('change', (e) => {
+        widget.setAttribute('contrast-mode', e.target.value);
+        logEvent(`contrast-mode -> ${e.target.value}`);
+      });
+
+      overlaySlider.addEventListener('input', (e) => {
+        const val = e.target.value;
+        overlayVal.textContent = `${val}%`;
+        widget.setAttribute('overlay-intensity', val);
+      });
+
+      posSelect.addEventListener('change', (e) => {
+        widget.setAttribute('position', e.target.value);
+        logEvent(`position -> ${e.target.value}`);
+      });
+
+      modeSelect.addEventListener('change', (e) => {
+        const mode = e.target.value;
+        if (mode === 'embedded') {
+          widget.setAttribute('mode', 'embedded');
+          posGroup.style.display = 'none';
+          embeddedWrapper.classList.add('active');
+          embeddedWrapper.appendChild(widget);
+          logEvent('mode -> embedded');
+        } else {
+          widget.removeAttribute('mode');
+          posGroup.style.display = 'flex';
+          embeddedWrapper.classList.remove('active');
+          document.body.appendChild(widget);
+          logEvent('mode -> floating');
+        }
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        widget.toggle();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        widget.reset();
+        logEvent('widget.reset() invoked');
+      });
+
+      // Event listener logging
+      function logEvent(msg) {
+        const time = new Date().toLocaleTimeString();
+        eventLog.textContent = `[${time}] ${msg}`;
+      }
+
+      widget.addEventListener('signal:open', () => logEvent('Event: signal:open'));
+      widget.addEventListener('signal:close', () => logEvent('Event: signal:close'));
+      widget.addEventListener('signal:state-change', (e) => {
+        logEvent(`Event: signal:state-change (${e.detail.state}${e.detail.error ? ': ' + e.detail.error : ''})`);
+      });
+      widget.addEventListener('signal:submit-success', (e) => {
+        logEvent(`Event: signal:submit-success (ID: ${e.detail.id.substring(0, 8)}...)`);
+      });
+      widget.addEventListener('signal:submit-error', (e) => {
+        logEvent(`Event: signal:submit-error (${e.detail.code}: ${e.detail.message})`);
+      });
+    </script>
+  </body>
+</html>

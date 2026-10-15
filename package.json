@@ -1,0 +1,57 @@
+{
+  "name": "signal-feedback",
+  "version": "1.0.0",
+  "description": "Production-Grade Embeddable Feedback Web Component with secure PostgreSQL backend",
+  "main": "./dist/signal-feedback.umd.js",
+  "module": "./dist/signal-feedback.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/signal-feedback.js",
+      "require": "./dist/signal-feedback.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start:server": "tsx src/server/index.ts",
+    "dev:server": "tsx watch src/server/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "feedback",
+    "web-component",
+    "custom-elements",
+    "shadow-dom",
+    "embeddable",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "jsdom": "^30.1.3",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  }
+}
